@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strade Sicure – AI Interactive Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Tailwind CSS for modern responsive layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navyDark: '#0D1B2A',
+                        navy: '#1A3C5E',
+                        navyLight: '#2e4e70',
+                        amber: '#F0A500',
+                        amberLight: '#FFC744',
+                        blueMid: '#1E6FA8',
+                        blueLight: '#2e86ab',
+                        cardBg: '#ffffff',
+                        offWhite: '#F8FAFC'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Base styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        /* 1280x720 Slide Container scaling support */
+        .slide-outer-box {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            background-color: #0f172a;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        .slide-inner-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1280px;
+            height: 720px;
+            transform-origin: top left;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        /* Custom slide elements from original JS/CSS presentation */
+        .slide-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: #0d1b2a;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 3px solid #f0a500;
+            padding-bottom: 10px;
+        }
+        .slide-title i { color: #f0a500; }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .card-dark {
+            background: #1a3c5e;
+            color: #ffffff;
+            border: none;
+        }
+        .card-accent-top { border-top: 5px solid #f0a500; }
+        .card-accent-blue { border-top: 5px solid #2e86ab; }
+        
+        .card h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #0d1b2a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-dark h3 { color: #ffffff; }
+        .card p { font-size: 14px; line-height: 1.6; color: #475569; }
+        .card-dark p { color: #cbd5e1; }
+
+        .card-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            color: #1a3c5e;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        .card-dark .card-icon { background: #0d1b2a; color: #ffc744; }
+
+        /* Tables styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #1a3c5e; color: #ffffff; font-family: 'Poppins', sans-serif; font-weight: 600; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        .highlight-val { font-weight: 700; color: #1a3c5e; }
+        .row-total { background-color: #0d1b2a !important; color: #ffffff; font-weight: 700; }
+        .row-total td { border-top: 2px solid #f0a500; }
+
+        /* Road map simulation styling (Realistic Version) */
+        .road-container {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .road-visual-realistic {
+            height: 200px;
+            background: #0f172a;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #334155;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        .road-asphalt-strip {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 60px;
+            background: #1e293b;
+            transform: translateY(-50%);
+            border-top: 2px dashed #64748b;
+            border-bottom: 2px dashed #64748b;
+        }
+        .road-center-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: repeating-linear-gradient(90deg, #ffb703 0px, #ffb703 15px, transparent 15px, transparent 30px);
+            transform: translateY(-50%);
+        }
+        
+        /* Map Marker Items */
+        .map-marker {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Solar Light Posts (Pali Luce Solari) */
+        .marker-solar-lamp {
+            top: 10px;
+        }
+        .lamp-post {
+            width: 2px;
+            height: 48px;
+            background: linear-gradient(180deg, #10b981 0%, #047857 100%);
+            position: relative;
+        }
+        .lamp-head {
+            position: absolute;
+            top: -6px;
+            left: -4px;
+            width: 10px;
+            height: 6px;
+            background: #10b981;
+            border-radius: 3px 3px 0 0;
+            box-shadow: 0 0 8px #10b981;
+        }
+        .lamp-light-beam {
+            position: absolute;
+            top: 42px;
+            left: -14px;
+            width: 30px;
+            height: 25px;
+            background: radial-gradient(circle, rgba(16,185,129,0.3) 0%, rgba(16,185,129,0) 70%);
+            clip-path: polygon(30% 0%, 70% 0%, 100% 100%, 0% 100%);
+            pointer-events: none;
+        }
+
+        /* Centraline IoT Hubs */
+        .marker-iot-hub {
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 20;
+        }
+        .hub-box {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 2px solid #ffffff;
+        }
+        .hub-box-master {
+            background: #f0a500;
+            box-shadow: 0 0 10px rgba(240, 165, 0, 0.6);
+        }
+        .hub-box-slave {
+            background: #1e6fa8;
+        }
+
+        /* De-icing Nozzles (Stazioni Antighiaccio) */
+        .marker-deice-station {
+            bottom: 12px;
+        }
+        .deice-nozzle {
+            width: 8px;
+            height: 12px;
+            background: #ef4444;
+            clip-path: polygon(25% 0%, 75% 0%, 100% 70%, 50% 100%, 0% 70%);
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.4);
+        }
+        .deice-mist {
+            width: 16px;
+            height: 14px;
+            background: radial-gradient(circle, rgba(239,68,68,0.4) 0%, rgba(239,68,68,0) 80%);
+            clip-path: polygon(30% 0%, 70% 0%, 100% 100%, 0% 100%);
+            animation: deice-spray-pulse 1.2s infinite ease-in-out;
+        }
+
+        @keyframes deice-spray-pulse {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 0.9; transform: scale(1.15); }
+        }
+
+        /* Map controls toggle styling */
+        .map-toggle-btn {
+            transition: all 0.2s ease;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .map-toggle-btn.active {
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        .layer-dimmed {
+            opacity: 0.1 !important;
+            filter: grayscale(0.8);
+        }
+
+        /* Diagrams */
+        .block-diagram { display: flex; flex-direction: column; gap: 8px; align-items: center; width: 100%; }
+        .block-node { width: 85%; padding: 8px; border-radius: 6px; text-align: center; color: #ffffff; font-weight: 600; font-size: 12px; }
+        .block-arrow { color: #475569; font-size: 11px; }
+
+        /* Doughnut Chart Simulation */
+        .doughnut-chart {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #f0a500 0% 25%, 
+                #1a3c5e 25% 64%, 
+                #2e86ab 64% 71%, 
+                #2dc653 71% 79%, 
+                #5b8fbe 79% 81%, 
+                #e63946 81% 86%, 
+                #94a3b8 86% 100%
+            );
+            position: relative;
+        }
+        .doughnut-inner {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: #ffffff;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: #0d1b2a;
+            text-align: center;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0b0f19; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2e4e70; }
+    </style>
+</head>
+<body class="p-4 lg:p-6 min-h-screen flex flex-col gap-6">
+
+    <!-- TOP STATUS BAR & HEADER -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-900 border border-slate-800 p-4 rounded-xl gap-4">
+        <div>
+            <div class="flex items-center gap-2 mb-1">
+                <i class="fa-solid fa-road text-amber text-xl"></i>
+                <h1 class="text-xl font-bold font-['Poppins'] text-white">Strade Sicure Interactive Platform</h1>
+                <span class="bg-amber text-navyDark px-2 py-0.5 text-xs rounded font-bold uppercase tracking-wider">AI Powered</span>
+            </div>
+            <p class="text-xs text-slate-400">Dimostratore IoT per la sicurezza stradale e prevenzione del ghiaccio (Tratto di 7.5 km)</p>
+        </div>
+
+        <!-- API KEY INPUT & STABILITY GUARD -->
+        <div class="flex items-center gap-3 w-full md:w-auto">
+            <div class="relative w-full md:w-64">
+                <i class="fa-solid fa-key absolute left-3 top-3 text-slate-500 text-xs"></i>
+                <input id="api-key-input" type="password" placeholder="Gemini API Key (Facoltativo)" 
+                       class="w-full pl-8 pr-3 py-2 bg-slate-950 text-xs text-white rounded-lg border border-slate-800 focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber">
+            </div>
+            <div class="text-slate-400 text-xs hidden sm:block">
+                <span id="connection-status" class="flex items-center gap-1.5 font-medium bg-emerald-950/40 text-emerald-400 px-2.5 py-1.5 rounded-lg border border-emerald-900/40">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Pronto
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN TWO-COLUMN WORKSPACE -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start flex-grow">
+        
+        <!-- LEFT COLUMN: PRESENTATION AND VIEWER (7 COLS) -->
+        <section class="xl:col-span-7 flex flex-col gap-4">
+            
+            <!-- Dynamic Slide Scaler Sandbox -->
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Slide Attiva</span>
+                    <!-- Slide Navigation -->
+                    <div class="flex items-center gap-2 text-xs">
+                        <button onclick="changeSlide(-1)" class="px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition">
+                            <i class="fa-solid fa-chevron-left mr-1"></i> Precedente
+                        </button>
+                        <span id="slide-indicator" class="font-bold text-amber bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">Slide 1 / 8</span>
+                        <button onclick="changeSlide(1)" class="px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition">
+                            Successivo <i class="fa-solid fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SLIDE VIEWPORT (Uses dynamic scaling to fit beautifully) -->
+                <div class="slide-outer-box" id="slide-viewport-container">
+                    <div id="slide-scaler" class="slide-inner-content">
+                        
+                        <!-- SLIDE 1: COVER -->
+                        <div id="slide-1" class="absolute inset-0 flex flex-row">
+                            <div class="w-[15px] h-full bg-amber"></div>
+                            <div class="flex-grow p-[60px] flex flex-col justify-between bg-navyDark text-white">
+                                <div class="flex flex-col gap-4">
+                                    <div class="flex items-center gap-4">
+                                        <i class="fa-solid fa-road text-amberText text-[40px] text-amberLight"></i>
+                                        <span class="badge bg-amber text-navyDark font-bold text-xs py-1 px-3 rounded uppercase tracking-wider">Progetto Strade Sicure</span>
+                                    </div>
+                                    <h1 class="font-['Poppins'] text-[50px] font-bold leading-tight mt-5">Sistema Intelligente<br>per la Sicurezza Stradale</h1>
+                                    <p class="text-[22px] text-amberLight italic">Applicazione reale su un tratto di 7,5 km</p>
+                                </div>
+                                <div class="grid grid-cols-4 gap-4 mt-8">
+                                    <div class="bg-[#1a3c5e]/60 border-t-4 border-amber p-4 rounded">
+                                        <div class="text-[12px] text-slate-300">Lunghezza Tratto</div>
+                                        <div class="text-[24px] font-bold text-amberLight">7,5 km</div>
+                                    </div>
+                                    <div class="bg-[#1a3c5e]/60 border-t-4 border-amber p-4 rounded">
+                                        <div class="text-[12px] text-slate-300">Centraline IoT</div>
+                                        <div class="text-[24px] font-bold text-amberLight">15 Hub</div>
+                                    </div>
+                                    <div class="bg-[#1a3c5e]/60 border-t-4 border-amber p-4 rounded">
+                                        <div class="text-[12px] text-slate-300">Lampioni Solari</div>
+                                        <div class="text-[24px] font-bold text-amberLight">150 Pali</div>
+                                    </div>
+                                    <div class="bg-[#1a3c5e]/60 border-t-4 border-amber p-4 rounded">
+                                        <div class="text-[12px] text-slate-300">Investimento Totale</div>
+                                        <div class="text-[24px] font-bold text-amberLight">~€240.000</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SLIDE 2: PANORAMICA -->
+                        <div id="slide-2" class="absolute inset-0 p-[50px] bg-offWhite text-slate-800 hidden flex-col justify-between">
+                            <h2 class="slide-title"><i class="fa-solid fa-circle-info"></i> Panoramica del Progetto</h2>
+                            <p class="text-[16px] text-slate-600 mb-4 leading-relaxed">
+                                "Strade Sicure" è un sistema IoT d'avanguardia progettato per monitorare, illuminare e proteggere le tratte stradali dal gelo in tempo reale. Questo schema descrive la sua implementazione su una distanza critica di 7,5 km.
+                            </p>
+                            <div class="grid grid-cols-3 gap-5">
+                                <div class="card card-accent-blue">
+                                    <div class="card-icon"><i class="fa-solid fa-temperature-half"></i></div>
+                                    <h3>Monitoraggio Ambientale</h3>
+                                    <p class="text-xs">Sensori di temperatura dell'asfalto, umidità dell'aria e luminosità ambientale posizionati ogni 500 m.</p>
+                                </div>
+                                <div class="card card-accent-blue">
+                                    <div class="card-icon"><i class="fa-solid fa-car"></i></div>
+                                    <h3>Rilevamento Veicoli</h3>
+                                    <p class="text-xs">Pedane piezoelettriche alloggiate sotto il manto rilevano costantemente il passaggio e la velocità.</p>
+                                </div>
+                                <div class="card card-accent-blue">
+                                    <div class="card-icon"><i class="fa-solid fa-lightbulb"></i></div>
+                                    <h3>Illuminazione Dinamica</h3>
+                                    <p class="text-xs">Fari a LED WS2812B lungo il bordo strada si attivano intelligentemente all'approssimarsi dei veicoli.</p>
+                                </div>
+                                <div class="card card-accent-top col-span-2">
+                                    <div class="card-icon text-blueLight"><i class="fa-solid fa-snowflake"></i></div>
+                                    <h3>Prevenzione Antighiaccio Smart</h3>
+                                    <p class="text-xs">Ugelli spruzzatori ad azionamento automatico guidati da microcontrollori ESP32, pronti a intervenire in condizioni di umidità e temperatura critiche.</p>
+                                </div>
+                                <div class="card card-accent-top border-t-emerald-500">
+                                    <div class="card-icon text-emerald-500"><i class="fa-solid fa-sun"></i></div>
+                                    <h3>Ecosostenibilità Totale</h3>
+                                    <p class="text-xs">150 lampioni alimentati da pannelli solari autonomi a zero consumo di rete.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SLIDE 3: TRATTO STRADALE -->
+                        <div id="slide-3" class="absolute inset-0 p-[50px] bg-offWhite text-slate-800 hidden flex-col justify-between">
+                            <h2 class="slide-title"><i class="fa-solid fa-map-location-dot"></i> Il Tratto Stradale – 7,5 KM</h2>
+                            <div class="grid grid-cols-2 gap-6 h-full items-center">
+                                
+                                <div class="road-container">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <h3 class="font-semibold text-slate-800 m-0">Visualizzazione Tecnica della Tratta</h3>
+                                        <!-- Interactive Map Filter Controls -->
+                                        <div class="flex gap-1.5 bg-slate-200 p-1 rounded-lg border border-slate-300">
+                                            <button id="toggle-layer-hubs" onclick="toggleRoadMapLayer('hubs')" class="map-toggle-btn active px-2 py-1 bg-slate-900 text-white rounded text-[10px]">Centraline (15)</button>
+                                            <button id="toggle-layer-lamps" onclick="toggleRoadMapLayer('lamps')" class="map-toggle-btn active px-2 py-1 bg-emerald-600 text-white rounded text-[10px]">Lampioni (150)</button>
+                                            <button id="toggle-layer-deice" onclick="toggleRoadMapLayer('deice')" class="map-toggle-btn active px-2 py-1 bg-rose-600 text-white rounded text-[10px]">Antigelo (37)</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Realistic Map Canvas Rendering -->
+                                    <div class="road-visual-realistic">
+                                        <!-- Realistic asphalt lane -->
+                                        <div class="road-asphalt-strip">
+                                            <div class="road-center-line"></div>
+                                        </div>
+
+                                        <!-- Layer: Solar Lamps (Punti Luce Solari - every 50m represented proportionally) -->
+                                        <div class="road-layer-lamps">
+                                            <!-- Green light posts along top margin -->
+                                            <div class="map-marker marker-solar-lamp" style="left: 4%;">
+                                                <div class="lamp-post"><div class="lamp-head"></div><div class="lamp-light-beam"></div></div>
+                                            </div>
+                                            <div class="map-marker marker-solar-lamp" style="left: 11%;">
+                                                <div class="lamp-post"><div class="lamp-head"></div><div class="lamp-light-beam"></div></div>
+                                            </div>
+                                            <div class="map-marker marker-solar-lamp" style="left: 18%;">
+                                                <div class="lamp-post"><div class="lamp-head"></div><div class="lamp-light-beam"></div></div>
+                                            </div>
+                                            <div class="map-marker marker-solar-lamp" style="left: 25%;">
+                                                <div class="lamp-post"><div class="lamp-head"></div><div class="lamp-light-beam"></div></div>
+                                            </div>
+                                            <div class="map-marker marker-solar-lamp" style="left: 32%;">
+                                                <div class="lamp-post"><div class="lamp-head"></div><div class="lamp-light-beam"></div></div>
+                                            </div>
+                                            <div class="map-marker marker-solar-lamp" style="left: 39%;">
+                                                <div class="lamp-post"><div class="lamp-head"></div><div class="lamp-light-beam"></div></div>
+                                            </div>
+                                            <div class="map-marker marker-solar-lamp" style="left: 46%;">
+                                                <div class="lamp-post"><div class="lamp-head"></div><div class="lamp-light-beam"></div></div>
+                                            </div>
+                                            <div class="map-marker marker-solar-lamp" style="left: 53%;">
+                                                <div class="lamp-post"><div class="lamp-head"></div><div class="lamp-light-beam"></div></div>
+                                            </div>
+                                            <div class="map-marker marker-solar-lamp" style="left: 60%;">
+                                                <div class="lamp-post"><div class="lamp-head"></div><div class="lamp-light-beam"></div></div>
+                                            </div>
+                                            <div class="map-marker marker-solar-lamp" style="left: 67%;">
+                                                <div class="lamp-post"><div class="lamp-head"></div><div class="lamp-light-beam"></div></div>
+                                            </div>
+                                            <div class="map-marker marker-solar-lamp" style="left: 74%;">
+                                                <div class="lamp-post"><div class="lamp-head"></div><div class="lamp-light-beam"></div></div>
+                                            </div>
+                                            <div class="map-marker marker-solar-lamp" style="left: 81%;">
+                                                <div class="lamp-post"><div class="lamp-head"></div><div class="lamp-light-beam"></div></div>
+                                            </div>
+                                            <div class="map-marker marker-solar-lamp" style="left: 88%;">
+                                                <div class="lamp-post"><div class="lamp-head"></div><div class="lamp-light-beam"></div></div>
+                                            </div>
+                                            <div class="map-marker marker-solar-lamp" style="left: 95%;">
+                                                <div class="lamp-post"><div class="lamp-head"></div><div class="lamp-light-beam"></div></div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Layer: IoT Centraline (Master in Amber, Slaves in Navy Blue) -->
+                                        <div class="road-layer-hubs">
+                                            <div class="map-marker marker-iot-hub" style="left: 1%;" title="Hub Principale - Master (km 0)">
+                                                <div class="hub-box hub-box-master">M</div>
+                                            </div>
+                                            <div class="map-marker marker-iot-hub" style="left: 20%;" title="Hub - Slave 1 (km 1.5)">
+                                                <div class="hub-box hub-box-slave">S</div>
+                                            </div>
+                                            <div class="map-marker marker-iot-hub" style="left: 40%;" title="Hub - Slave 2 (km 3.0)">
+                                                <div class="hub-box hub-box-slave">S</div>
+                                            </div>
+                                            <div class="map-marker marker-iot-hub" style="left: 60%;" title="Hub - Slave 3 (km 4.5)">
+                                                <div class="hub-box hub-box-slave">S</div>
+                                            </div>
+                                            <div class="map-marker marker-iot-hub" style="left: 80%;" title="Hub - Slave 4 (km 6.0)">
+                                                <div class="hub-box hub-box-slave">S</div>
+                                            </div>
+                                            <div class="map-marker marker-iot-hub" style="left: 96%;" title="Hub Terminale - Master (km 7.5)">
+                                                <div class="hub-box hub-box-master">M</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Layer: De-icing Stations (Stazioni Antighiaccio - every 200m represented proportionally) -->
+                                        <div class="road-layer-deice">
+                                            <div class="map-marker marker-deice-station" style="left: 8%;">
+                                                <div class="deice-nozzle"></div><div class="deice-mist"></div>
+                                            </div>
+                                            <div class="map-marker marker-deice-station" style="left: 22%;">
+                                                <div class="deice-nozzle"></div><div class="deice-mist"></div>
+                                            </div>
+                                            <div class="map-marker marker-deice-station" style="left: 36%;">
+                                                <div class="deice-nozzle"></div><div class="deice-mist"></div>
+                                            </div>
+                                            <div class="map-marker marker-deice-station" style="left: 50%;">
+                                                <div class="deice-nozzle"></div><div class="deice-mist"></div>
+                                            </div>
+                                            <div class="map-marker marker-deice-station" style="left: 64%;">
+                                                <div class="deice-nozzle"></div><div class="deice-mist"></div>
+                                            </div>
+                                            <div class="map-marker marker-deice-station" style="left: 78%;">
+                                                <div class="deice-nozzle"></div><div class="deice-mist"></div>
+                                            </div>
+                                            <div class="map-marker marker-deice-station" style="left: 92%;">
+                                                <div class="deice-nozzle"></div><div class="deice-mist"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Legend Area -->
+                                    <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-600 mt-1">
+                                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-md bg-amber"></div> Centraline IoT Master</div>
+                                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-md bg-blueLight"></div> Centraline IoT Slave</div>
+                                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-md bg-emerald-500"></div> Punti Luce Solari (150 tot.)</div>
+                                        <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-md bg-rose-500 animate-pulse"></div> Stazioni Antighiaccio (37 tot.)</div>
+                                    </div>
+                                </div>
+                                <div class="card card-dark card-accent-top">
+                                    <h3>DATI TECNICI DEL TRATTO</h3>
+                                    <ul class="flex flex-col gap-2 mt-2 text-xs text-slate-200">
+                                        <li class="flex justify-between border-b border-white/10 pb-1"><span>Estensione Tratto:</span><span class="text-amber font-bold">7,5 km</span></li>
+                                        <li class="flex justify-between border-b border-white/10 pb-1"><span>Nodi Hub IoT Totali:</span><span class="text-amber font-bold">15 Hub</span></li>
+                                        <li class="flex justify-between border-b border-white/10 pb-1"><span>Sensori installati:</span><span class="text-amber font-bold">120+ attivi</span></li>
+                                        <li class="flex justify-between border-b border-white/10 pb-1"><span>Pali di Illuminazione:</span><span class="text-amber font-bold">150 unità</span></li>
+                                        <li class="flex justify-between border-b border-white/10 pb-1"><span>Erogatori Antighiaccio:</span><span class="text-amber font-bold">37 stazioni</span></li>
+                                        <li class="flex justify-between"><span>Connettività Cloud:</span><span class="text-amber font-bold">100% 4G LTE</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SLIDE 4: CENTRALINE & SENSORI -->
+                        <div id="slide-4" class="absolute inset-0 p-[50px] bg-offWhite text-slate-800 hidden flex-col justify-between">
+                            <h2 class="slide-title"><i class="fa-solid fa-microchip"></i> Centraline ESP32 e Sensori Ambientali</h2>
+                            <div class="grid grid-cols-2 gap-6">
+                                <div class="card card-dark card-accent-top">
+                                    <h3>ARCHITETTURA HUB CENTRALINA (×15)</h3>
+                                    <p class="text-xs text-slate-300 mb-3">Alloggiamento protettivo IP67 anti-vandalo lungo strada.</p>
+                                    <ul class="flex flex-col gap-1.5 text-xs">
+                                        <li class="flex gap-2"><i class="fa-solid fa-square-check text-amber"></i><span>ESP32 Dev Board (CPU Dual Core)</span></li>
+                                        <li class="flex gap-2"><i class="fa-solid fa-square-check text-amber"></i><span>Step-down LM2596 (12V -> 5V)</span></li>
+                                        <li class="flex gap-2"><i class="fa-solid fa-square-check text-amber"></i><span>Fusibile di sicurezza da 5A</span></li>
+                                        <li class="flex gap-2"><i class="fa-solid fa-square-check text-amber"></i><span>Modulo SIM7600 4G LTE</span></li>
+                                        <li class="flex gap-2"><i class="fa-solid fa-square-check text-amber"></i><span>Alimentatore stagno IP67 12V 5A</span></li>
+                                    </ul>
+                                </div>
+                                <div class="flex flex-col gap-2.5">
+                                    <div class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded shadow-sm">
+                                        <div class="w-10 h-10 rounded-full bg-sky-100 flex items-center justify-center text-sky-600"><i class="fa-solid fa-temperature-low"></i></div>
+                                        <div><h4 class="font-bold text-xs">DS18B20 - Sonda Temperatura Asfalto</h4><p class="text-[10px] text-slate-500">Sotto-manto, resinata ed impermeabile.</p></div>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded shadow-sm">
+                                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><i class="fa-solid fa-cloud-showers-water"></i></div>
+                                        <div><h4 class="font-bold text-xs">DHT22 - Sensore Umidità e Temperatura Aria</h4><p class="text-[10px] text-slate-500">Calcolo della temperatura di rugiada (dew point).</p></div>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded shadow-sm">
+                                        <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber"><i class="fa-solid fa-sun"></i></div>
+                                        <div><h4 class="font-bold text-xs">BH1750 - Sensore di Luminosità I2C</h4><p class="text-[10px] text-slate-500">Rilevamento lux ambientali per controllo barriere LED.</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SLIDE 5: PEDANE & LED -->
+                        <div id="slide-5" class="absolute inset-0 p-[50px] bg-offWhite text-slate-800 hidden flex-col justify-between">
+                            <h2 class="slide-title"><i class="fa-solid fa-car"></i> Rilevamento Veicoli e Illuminazione Dinamica</h2>
+                            <div class="grid grid-cols-2 gap-6">
+                                <div class="card card-accent-blue">
+                                    <h3>PEDANE PIEZOELETTRICHE DI TRANSITO</h3>
+                                    <div class="flex flex-col gap-2.5 mt-2">
+                                        <div class="flex gap-2.5 items-start">
+                                            <div class="w-5 h-5 bg-blueLight text-white text-[10px] font-bold rounded-full flex items-center justify-center flex-shrink-0">1</div>
+                                            <div class="text-[11px]"><h4 class="font-semibold text-slate-800">Pressione Dinamica</h4><p class="text-slate-500">Passaggio veicolo sui dischi piezoelettrici.</p></div>
+                                        </div>
+                                        <div class="flex gap-2.5 items-start">
+                                            <div class="w-5 h-5 bg-blueLight text-white text-[10px] font-bold rounded-full flex items-center justify-center flex-shrink-0">2</div>
+                                            <div class="text-[11px]"><h4 class="font-semibold text-slate-800">Amplificazione LM358</h4><p class="text-slate-500">Segnale filtrato ed amplificato dall'operazionale.</p></div>
+                                        </div>
+                                        <div class="flex gap-2.5 items-start">
+                                            <div class="w-5 h-5 bg-blueLight text-white text-[10px] font-bold rounded-full flex items-center justify-center flex-shrink-0">3</div>
+                                            <div class="text-[11px]"><h4 class="font-semibold text-slate-800">Acquisizione ESP32</h4><p class="text-slate-500">Microcontrollore calcola frequenza, velocità e passaggio.</p></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card card-accent-top">
+                                    <h3>STRISCE LED WS2812B INTELLIGENTI</h3>
+                                    <div class="grid grid-cols-2 gap-3 mt-2 text-[11px]">
+                                        <div class="bg-slate-100 p-2 border-l-4 border-amber rounded">
+                                            <h4 class="font-bold text-slate-800">750 Moduli LED</h4>
+                                            <p class="text-[10px] text-slate-500">Ogni 20m su entrambi i lati per guidare il transito.</p>
+                                        </div>
+                                        <div class="bg-slate-100 p-2 border-l-4 border-amber rounded">
+                                            <h4 class="font-bold text-slate-800">Colorazione Adattiva</h4>
+                                            <p class="text-[10px] text-slate-500">Bianco guida, Ambra attenzione, Rosso gelo o ostacolo.</p>
+                                        </div>
+                                    </div>
+                                    <p class="text-[10px] text-slate-500 italic mt-4">Circuito protetto con resistenze da 330 Ohm sulla linea dati e condensatori da 1000uF per stabilizzare i 5V.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SLIDE 6: ANTIGHIACCIO & LAMPIONI -->
+                        <div id="slide-6" class="absolute inset-0 p-[50px] bg-offWhite text-slate-800 hidden flex-col justify-between">
+                            <h2 class="slide-title"><i class="fa-solid fa-snowflake"></i> Sistema Antighiaccio e Lampioni Solari</h2>
+                            <div class="grid grid-cols-2 gap-6">
+                                <div class="card card-accent-blue">
+                                    <h3>SISTEMA DI SBRINAMENTO AUTOMATICO</h3>
+                                    <div class="bg-slate-900 text-amberLight p-3 rounded font-mono text-[11px] leading-snug mb-3">
+                                        SE Temp_Asfalto &lt; 2.0 °C<br>
+                                        E Umidità_Aria &gt; 80%<br>
+                                        &rarr; Attiva pompa relè per 5 sec
+                                    </div>
+                                    <table class="text-[10px]">
+                                        <thead><tr><th>Componente</th><th>Specifica</th><th class="text-right">QTÀ</th></tr></thead>
+                                        <tbody>
+                                            <tr><td>Mini pompa 12V</td><td>Diaframma, autoadescante</td><td class="text-right font-bold text-navy">1 per punto</td></tr>
+                                            <tr><td>Modulo Relè 5V</td><td>Isolamento optoisolato</td><td class="text-right font-bold text-navy">1 per punto</td></tr>
+                                            <tr><td>Ugelli atomizzatori</td><td>Nebulizzazione grandangolo</td><td class="text-right font-bold text-navy">2 per punto</td></tr>
+                                            <tr><td>Serbatoio integrato</td><td>Capacità 0.5L liquido salino</td><td class="text-right font-bold text-navy">1 per punto</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="card card-accent-top border-t-emerald-500">
+                                    <h3>LAMPIONE SOLARE AUTONOMO (150 UNITÀ)</h3>
+                                    <div class="block-diagram">
+                                        <div class="block-node bg-amber py-1">Pannello Solare Fotovoltaico 6V</div>
+                                        <div class="block-arrow"><i class="fa-solid fa-arrow-down"></i></div>
+                                        <div class="block-node bg-sky-600 py-1">Circuito Regolatore di Carica TP4056</div>
+                                        <div class="block-arrow"><i class="fa-solid fa-arrow-down"></i></div>
+                                        <div class="block-node bg-slate-900 py-1">Batteria d'accumulo Li-ion 6V</div>
+                                        <div class="block-arrow"><i class="fa-solid fa-arrow-down"></i></div>
+                                        <div class="block-node bg-emerald-500 py-1 font-bold text-slate-900">Faro LED 6V Alta Efficienza</div>
+                                    </div>
+                                    <p class="text-[10px] text-slate-500 text-center mt-2">Supporto: Tubo PVC Ø 50mm | Altezza 5m | Grado IP65</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SLIDE 7: TABELLA COSTI -->
+                        <div id="slide-7" class="absolute inset-0 p-[50px] bg-offWhite text-slate-800 hidden flex-col justify-between">
+                            <h2 class="slide-title"><i class="fa-solid fa-euro-sign"></i> Costi di Implementazione - Dettaglio Hardware</h2>
+                            <div class="overflow-hidden rounded border border-slate-200 shadow-sm max-h-[500px]">
+                                <table class="text-[10px]">
+                                    <thead>
+                                        <tr>
+                                            <th>Categoria di Spesa</th>
+                                            <th>Componente Tecnico</th>
+                                            <th class="text-center">Quantità</th>
+                                            <th class="text-right">Costo Unit.</th>
+                                            <th class="text-right">Totale</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="interactive-budget-table-body">
+                                        <!-- Will be rendered dynamically to support the sandbox -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- SLIDE 8: BUDGET & ROI -->
+                        <div id="slide-8" class="absolute inset-0 p-[50px] bg-offWhite text-slate-800 hidden flex-col justify-between">
+                            <h2 class="slide-title"><i class="fa-solid fa-chart-pie"></i> Analisi Budget e Ritorno sull'Investimento</h2>
+                            <div class="grid grid-cols-2 gap-6 h-full items-center">
+                                <div class="card card-accent-blue flex-row items-center gap-4 py-4">
+                                    <div class="doughnut-chart">
+                                        <div class="doughnut-inner">
+                                            <div>
+                                                <div class="text-[10px] uppercase text-slate-400 font-semibold">Budget</div>
+                                                <div class="text-sm font-bold text-navy" id="roi-budget-total">€240.000</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col gap-1 text-[9px] text-slate-600">
+                                        <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-navy"></div> Installazione (39%)</div>
+                                        <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-amber"></div> Luci Solari (25%)</div>
+                                        <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-blueLight"></div> Marker LED (7%)</div>
+                                        <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div> Software & Cloud (8%)</div>
+                                        <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-slate-400"></div> Imprevisti & Altro (21%)</div>
+                                    </div>
+                                </div>
+                                <div class="card card-dark card-accent-top">
+                                    <h3>RITORNO ECONOMICO (ROI)</h3>
+                                    <ul class="flex flex-col gap-2 mt-2 text-[11px] text-slate-200">
+                                        <li class="flex justify-between border-b border-white/10 pb-1"><span>Risparmio Energetico Lampioni:</span><span class="text-amberLight font-bold">€ 18.000/anno</span></li>
+                                        <li class="flex justify-between border-b border-white/10 pb-1"><span>Abbattimento Incidenti (-40%):</span><span class="text-amberLight font-bold">€ 30.000/anno</span></li>
+                                        <li class="flex justify-between border-b border-white/10 pb-1"><span>Manutenzione Diretta Ottimizzata:</span><span class="text-amberLight font-bold">€ 8.000/anno</span></li>
+                                        <li class="flex justify-between"><span>Illuminazione Smart Dinamica:</span><span class="text-amberLight font-bold">€ 5.000/anno</span></li>
+                                    </ul>
+                                    <div class="bg-amber/15 border border-amber/30 rounded p-2.5 text-center mt-3">
+                                        <h4 class="text-xs font-bold text-amberLight">Break-Even Point stimato</h4>
+                                        <p class="text-xs text-white" id="roi-payback-text">Ammortamento totale in <strong>4.2 anni</strong></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Presenter Coach Script Generator Section powered by Gemini -->
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl flex flex-col gap-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-microphone text-amber"></i>
+                        <h3 class="font-bold text-white text-sm">Presentazione Assistita: AI Presenter Coach</h3>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <select id="coach-audience-select" class="bg-slate-950 text-xs text-slate-300 rounded border border-slate-800 px-2.5 py-1.5 focus:outline-none focus:border-amber">
+                            <option value="pubblica_amministrazione">Pubblico: Sindaci / Enti Locali</option>
+                            <option value="investitori">Pubblico: Investitori Privati</option>
+                            <option value="tecnici">Pubblico: Ingegneri / Tecnici</option>
+                        </select>
+                        <button onclick="generateSpeech()" class="bg-amber hover:bg-amberLight text-navyDark font-bold text-xs px-3 py-1.5 rounded transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Genera Speech
+                        </button>
+                    </div>
+                </div>
+                <div id="coach-speech-container" class="bg-slate-950 border border-slate-850 p-4 rounded-lg text-xs leading-relaxed text-slate-300 min-h-[80px] max-h-[160px] overflow-y-auto">
+                    Seleziona un tipo di pubblico e clicca su "Genera Speech". Gemini analizzerà il contenuto visivo della slide corrente e produrrà un copione di presentazione ad hoc per te.
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT COLUMN: INTERACTIVE SIMULATIONS & ANALYST SANDBOX (5 COLS) -->
+        <section class="xl:col-span-5 flex flex-col gap-6">
+            
+            <!-- Tab Navigation for the AI tools -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                <div class="flex border-b border-slate-800 bg-slate-950 text-xs">
+                    <button onclick="switchTab('tab-sim')" id="btn-tab-sim" class="flex-1 py-3 text-center border-b-2 border-amber text-amber font-semibold flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-cloud-sun-rain"></i> Simulatore
+                    </button>
+                    <button onclick="switchTab('tab-fin')" id="btn-tab-fin" class="flex-1 py-3 text-center border-b-2 border-transparent text-slate-400 font-semibold hover:bg-slate-900 transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-sliders"></i> Finanza Sandbox
+                    </button>
+                    <button onclick="switchTab('tab-chat')" id="btn-tab-chat" class="flex-1 py-3 text-center border-b-2 border-transparent text-slate-400 font-semibold hover:bg-slate-900 transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-comments"></i> Assistente Chat
+                    </button>
+                </div>
+
+                <!-- TAB 1: WEATHER & ROAD OPERATIONAL SIMULATOR (GEMINI SIMULATION) -->
+                <div id="tab-sim" class="p-5 flex flex-col gap-4">
+                    <div class="flex items-center gap-1.5">
+                        <h3 class="font-bold text-white text-sm">Simulatore Operativo della Tratta</h3>
+                        <span class="text-[10px] bg-sky-950 text-sky-400 border border-sky-900/40 px-2 py-0.5 rounded">IoT Sandbox</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Modifica le condizioni meteo, del manto e del traffico. Gemini calcolerà come reagiscono l'hardware, le centraline e le pompe de-ice.</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 bg-slate-950 p-4 rounded-xl border border-slate-850">
+                        <!-- Temp Slider -->
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-bold text-slate-400 flex justify-between">
+                                <span>Temperatura Asfalto</span>
+                                <span id="temp-val" class="text-amber">-2°C</span>
+                            </label>
+                            <input id="slider-temp" type="range" min="-10" max="40" value="-2" oninput="updateSimSliders()" 
+                                   class="w-full accent-amber h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                        </div>
+
+                        <!-- Humidity Slider -->
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-bold text-slate-400 flex justify-between">
+                                <span>Umidità Aria</span>
+                                <span id="hum-val" class="text-sky-400">85%</span>
+                            </label>
+                            <input id="slider-hum" type="range" min="0" max="100" value="85" oninput="updateSimSliders()" 
+                                   class="w-full accent-sky-500 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                        </div>
+
+                        <!-- Light Level -->
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-bold text-slate-400">Luminosità Ambientale</label>
+                            <select id="select-light" class="bg-slate-900 text-xs text-slate-300 border border-slate-800 rounded px-2 py-1.5 focus:outline-none focus:border-amber">
+                                <option value="notturno">Notte Buia (1 lux)</option>
+                                <option value="crepuscolo">Crepuscolo (100 lux)</option>
+                                <option value="nuvoloso">Giorno Nuvoloso (1000 lux)</option>
+                                <option value="soleggiato" selected>Giorno Soleggiato (50000 lux)</option>
+                            </select>
+                        </div>
+
+                        <!-- Traffic density -->
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[11px] font-bold text-slate-400">Densità Traffico</label>
+                            <select id="select-traffic" class="bg-slate-900 text-xs text-slate-300 border border-slate-800 rounded px-2 py-1.5 focus:outline-none focus:border-amber">
+                                <option value="nessuno">Nessun transito</option>
+                                <option value="singolo" selected>Veicolo Singolo Isolato</option>
+                                <option value="intenso">Traffico Ora di Punta</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button onclick="runOperationalSimulation()" class="w-full bg-blueLight hover:bg-blueLight/90 text-white font-bold text-xs py-2.5 rounded-lg transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play"></i> Elabora Risposta di Sistema (AI Gemini)
+                    </button>
+
+                    <div class="flex flex-col gap-2">
+                        <span class="text-xs text-slate-400 font-semibold">Report di Risposta Hardware (Gemini Prediction)</span>
+                        <div id="sim-report-output" class="bg-slate-950 border border-slate-850 p-4 rounded-xl text-xs text-slate-300 min-h-[140px] leading-relaxed">
+                            Definisci i parametri e lancia la simulazione. Gemini analizzerà lo stato combinato dei sensori DHT22, DS18B20, BH1750 e delle pedane piezo, per descrivere l'attivazione dei LED, lo sbrinamento e il dispendio energetico dell'accumulo TP4056.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: FINANCIAL OPTIMIZER SANDBOX -->
+                <div id="tab-fin" class="p-5 flex flex-col gap-4 hidden">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-white text-sm">Laboratorio Ottimizzazione Budget</h3>
+                        <button onclick="resetBudgetSandbox()" class="text-[10px] text-slate-400 hover:text-amber"><i class="fa-solid fa-rotate-left mr-1"></i>Reset</button>
+                    </div>
+                    <p class="text-xs text-slate-400 font-medium">Usa i cursori per simulare una variante di progetto (es. accorciare il tratto o ricalibrare i costi hardware) e lascia che Gemini valuti l'impatto economico.</p>
+                    
+                    <div class="grid grid-cols-1 gap-4 bg-slate-950 p-4 rounded-xl border border-slate-850 text-xs">
+                        <!-- Stretch length -->
+                        <div class="flex flex-col gap-1">
+                            <div class="flex justify-between font-bold text-slate-400">
+                                <span>Estensione Tratto</span>
+                                <span id="box-stretch-val" class="text-amber">7.5 km</span>
+                            </div>
+                            <input id="slider-stretch" type="range" min="1" max="50" step="0.5" value="7.5" oninput="updateBudgetSliders()" 
+                                   class="w-full accent-amber h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                        </div>
+
+                        <!-- Cost adjustment scale multiplier -->
+                        <div class="flex flex-col gap-1">
+                            <div class="flex justify-between font-bold text-slate-400">
+                                <span>Costo Unitario Lampione Solare</span>
+                                <span id="box-lamp-val" class="text-sky-400">€ 400</span>
+                            </div>
+                            <input id="slider-lamp" type="range" min="150" max="800" step="10" value="400" oninput="updateBudgetSliders()" 
+                                   class="w-full accent-sky-500 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                        </div>
+
+                        <!-- Cost of excavation per meter -->
+                        <div class="flex flex-col gap-1">
+                            <div class="flex justify-between font-bold text-slate-400">
+                                <span>Scavi e Posa Cavi (al metro)</span>
+                                <span id="box-exc-val" class="text-emerald-400">€ 8 / m</span>
+                            </div>
+                            <input id="slider-exc" type="range" min="2" max="25" step="0.5" value="8" oninput="updateBudgetSliders()" 
+                                   class="w-full accent-emerald-500 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+
+                    <button onclick="runFinancialOptimization()" class="w-full bg-amber hover:bg-amberLight text-navyDark font-bold text-xs py-2.5 rounded-lg transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-calculator"></i> Analizza Fattibilità Economica con AI
+                    </button>
+
+                    <div class="flex flex-col gap-2">
+                        <span class="text-xs text-slate-400 font-semibold">Audit Economico & ROI AI Projections</span>
+                        <div id="fin-report-output" class="bg-slate-950 border border-slate-850 p-4 rounded-xl text-xs text-slate-300 min-h-[140px] leading-relaxed">
+                            Gemini elaborerà un parere di fattibilità descrivendo il punto di ammortamento modificato, i risparmi stimati e la congruità dell'investimento infrastrutturale.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: AI CONSULTANT CHATBOT -->
+                <div id="tab-chat" class="p-5 flex flex-col gap-4 hidden">
+                    <div class="flex items-center gap-1.5">
+                        <h3 class="font-bold text-white text-sm">AI Technical Specialist</h3>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    </div>
+                    
+                    <div id="chat-messages-container" class="bg-slate-950 border border-slate-850 p-4 rounded-xl h-[220px] overflow-y-auto flex flex-col gap-3 text-xs scroll-smooth">
+                        <div class="bg-slate-900 text-slate-300 p-2.5 rounded-lg border border-slate-800 max-w-[85%] self-start">
+                            <strong>AI Assistant:</strong> Salve! Sono l'esperto tecnico del sistema "Strade Sicure". Posso aiutarti a redigere relazioni tecniche, descrivere la logica hardware o simulare codice firmware per le centraline ESP32. Chiedimi pure!
+                        </div>
+                    </div>
+
+                    <!-- Pre-made Prompts for quick interaction -->
+                    <div class="flex flex-wrap gap-1.5">
+                        <button onclick="quickPrompt('Genera codice firmware C++ per l\'algoritmo antighiaccio ESP32.')" class="bg-slate-950 hover:bg-slate-850 text-[10px] text-slate-300 px-2 py-1.5 border border-slate-800 rounded">
+                            <i class="fa-solid fa-code mr-1"></i> Firmware C++
+                        </button>
+                        <button onclick="quickPrompt('Redigi una breve bozza di proposta da presentare alla PA locale.')" class="bg-slate-950 hover:bg-slate-850 text-[10px] text-slate-300 px-2 py-1.5 border border-slate-800 rounded">
+                            <i class="fa-solid fa-file-contract mr-1"></i> Bozza per la PA
+                        </button>
+                        <button onclick="quickPrompt('Spiega in modo semplice come funzionano le pedane piezoelettriche.')" class="bg-slate-950 hover:bg-slate-850 text-[10px] text-slate-300 px-2 py-1.5 border border-slate-800 rounded">
+                            <i class="fa-solid fa-lightbulb mr-1"></i> Principio Piezo
+                        </button>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <input id="chat-user-input" type="text" placeholder="Fai una domanda tecnica sull'infrastruttura..." 
+                               onkeydown="if(event.key === 'Enter') sendChatMessage()"
+                               class="flex-grow bg-slate-950 text-xs text-white rounded-lg border border-slate-800 px-3 py-2 focus:outline-none focus:border-amber">
+                        <button onclick="sendChatMessage()" class="bg-amber hover:bg-amberLight text-navyDark px-4 rounded-lg font-bold text-xs flex items-center justify-center">
+                            Invia
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC & COMPILER SETUP -->
+    <script>
+        // System state variables
+        let currentSlide = 1;
+        const totalSlides = 8;
+        
+        // Map layer states
+        let mapLayers = {
+            hubs: true,
+            lamps: true,
+            deice: true
+        };
+
+        // Toggle layer elements visibility on Slide 3
+        function toggleRoadMapLayer(layer) {
+            mapLayers[layer] = !mapLayers[layer];
+            
+            // Highlight button state
+            const btn = document.getElementById(`toggle-layer-${layer}`);
+            const layerEl = document.querySelector(`.road-layer-${layer}`);
+            
+            if (mapLayers[layer]) {
+                btn.classList.add('active');
+                if (layer === 'hubs') btn.className = 'map-toggle-btn active px-2 py-1 bg-slate-900 text-white rounded text-[10px]';
+                if (layer === 'lamps') btn.className = 'map-toggle-btn active px-2 py-1 bg-emerald-600 text-white rounded text-[10px]';
+                if (layer === 'deice') btn.className = 'map-toggle-btn active px-2 py-1 bg-rose-600 text-white rounded text-[10px]';
+                
+                if (layerEl) layerEl.classList.remove('layer-dimmed');
+            } else {
+                btn.classList.remove('active');
+                btn.className = 'map-toggle-btn px-2 py-1 bg-slate-300 text-slate-700 rounded text-[10px]';
+                
+                if (layerEl) layerEl.classList.add('layer-dimmed');
+            }
+        }
+
+        // Default Project Configuration parameters
+        const baseConfig = {
+            stretchKm: 7.5,
+            lampUnitCost: 400,
+            excavationCostPerMeter: 8,
+            numHubs: 15,
+            numLamps: 150,
+            numDeice: 37,
+            numLeds: 750
+        };
+
+        // Active workspace Configuration
+        let activeConfig = { ...baseConfig };
+
+        // DOM Loaded actions
+        window.onload = function() {
+            adjustSlideScaling();
+            renderBudgetTable();
+            updateBudgetSliders();
+            window.addEventListener('resize', adjustSlideScaling);
+        };
+
+        // Slide Viewport Auto Scaling to fit precisely in the container (1280x720 logic)
+        function adjustSlideScaling() {
+            const container = document.getElementById('slide-viewport-container');
+            const slide = document.getElementById('slide-scaler');
+            if (!container || !slide) return;
+
+            const containerWidth = container.clientWidth;
+            // Target aspect ratio is 16:9 -> 1280 / 720 = 1.777
+            const scaleFactor = containerWidth / 1280;
+            
+            slide.style.transform = `scale(${scaleFactor})`;
+            
+            // Adjust container height based on scale factor to ensure proper layout spacing
+            container.style.height = `${720 * scaleFactor}px`;
+        }
+
+        // Change Slide Viewport Handler
+        function changeSlide(direction) {
+            // Hide previous active slide
+            document.getElementById(`slide-${currentSlide}`).classList.add('hidden');
+            document.getElementById(`slide-${currentSlide}`).classList.remove('flex');
+            
+            currentSlide += direction;
+            if (currentSlide < 1) currentSlide = totalSlides;
+            if (currentSlide > totalSlides) currentSlide = 1;
+
+            // Show new active slide
+            document.getElementById(`slide-${currentSlide}`).classList.remove('hidden');
+            if (currentSlide === 1 || currentSlide === 2 || currentSlide === 3 || currentSlide === 4 || currentSlide === 5 || currentSlide === 6 || currentSlide === 8) {
+                document.getElementById(`slide-${currentSlide}`).classList.add('flex');
+            }
+            
+            document.getElementById('slide-indicator').innerText = `Slide ${currentSlide} / ${totalSlides}`;
+            
+            // Trigger coach text reset for seamlessness
+            document.getElementById('coach-speech-container').innerHTML = `
+                Presentazione aggiornata alla Slide ${currentSlide}. Clicca su "Genera Speech" per ottenere il copione.
+            `;
+        }
+
+        // Tab View Switcher logic
+        function switchTab(tabId) {
+            ['tab-sim', 'tab-fin', 'tab-chat'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+                document.getElementById(`btn-${id}`).classList.remove('border-amber', 'text-amber');
+                document.getElementById(`btn-${id}`).classList.add('border-transparent', 'text-slate-400');
+            });
+
+            document.getElementById(tabId).classList.remove('hidden');
+            document.getElementById(`btn-${tabId}`).classList.add('border-amber', 'text-amber');
+            document.getElementById(`btn-${tabId}`).classList.remove('border-transparent', 'text-slate-400');
+        }
+
+        // Dynamic simulation helper sliders
+        function updateSimSliders() {
+            const temp = document.getElementById('slider-temp').value;
+            const hum = document.getElementById('slider-hum').value;
+            document.getElementById('temp-val').innerText = `${temp}°C`;
+            document.getElementById('hum-val').innerText = `${hum}%`;
+            
+            if (parseInt(temp) < 2) {
+                document.getElementById('temp-val').className = "text-rose-400 font-bold";
+            } else {
+                document.getElementById('temp-val').className = "text-amber font-bold";
+            }
+        }
+
+        // Budget Sandbox update calculations
+        function updateBudgetSliders() {
+            const stretch = parseFloat(document.getElementById('slider-stretch').value);
+            const lampCost = parseInt(document.getElementById('slider-lamp').value);
+            const excavation = parseFloat(document.getElementById('slider-exc').value);
+
+            document.getElementById('box-stretch-val').innerText = `${stretch.toFixed(1)} km`;
+            document.getElementById('box-lamp-val').innerText = `€ ${lampCost}`;
+            document.getElementById('box-exc-val').innerText = `€ ${excavation.toFixed(1)} / m`;
+
+            // Adjust related scale components proportionally based on new length
+            activeConfig.stretchKm = stretch;
+            activeConfig.lampUnitCost = lampCost;
+            activeConfig.excavationCostPerMeter = excavation;
+
+            const scaleRatio = stretch / 7.5;
+            activeConfig.numHubs = Math.max(2, Math.round(15 * scaleRatio));
+            activeConfig.numLamps = Math.max(10, Math.round(150 * scaleRatio));
+            activeConfig.numDeice = Math.max(5, Math.round(37 * scaleRatio));
+            activeConfig.numLeds = Math.max(100, Math.round(750 * scaleRatio));
+
+            renderBudgetTable();
+        }
+
+        // Reset Sandbox settings to defaults
+        function resetBudgetSandbox() {
+            document.getElementById('slider-stretch').value = 7.5;
+            document.getElementById('slider-lamp').value = 400;
+            document.getElementById('slider-exc').value = 8;
+            updateBudgetSliders();
+        }
+
+        // Calculate and render budget and costs dynamically
+        function renderBudgetTable() {
+            const c = activeConfig;
+            
+            // Subcategory calculations
+            const hubCost = c.numHubs * 150;
+            const simCost = c.numHubs * 40;
+            const sensorCost = c.numHubs * 23;
+            const piezoCost = Math.round(c.numHubs * 2) * 20;
+            const ledCost = c.numLeds * 22;
+            const deiceCost = c.numDeice * 120;
+            const liquidCost = Math.round(c.stretchKm * 66.6) * 2;
+            const solarLampCost = c.numLamps * c.lampUnitCost;
+            const cablingCost = Math.round(c.stretchKm * 1000) * 2.4; 
+            
+            const subtotalHardware = hubCost + simCost + sensorCost + piezoCost + ledCost + deiceCost + liquidCost + solarLampCost + cablingCost;
+            const excavationCostTotal = Math.round(c.stretchKm * 1000) * c.excavationCostPerMeter;
+            const installationCost = Math.round(35000 * (c.stretchKm / 7.5));
+            const cloudSoftware = 20000;
+            const subtotalServices = excavationCostTotal + installationCost + cloudSoftware;
+            const contingency = Math.round((subtotalHardware + subtotalServices) * 0.1);
+            
+            const totalProjectCost = subtotalHardware + subtotalServices + contingency;
+
+            // Render details into slide 7 table body
+            const tbody = document.getElementById('interactive-budget-table-body');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr><td class="font-bold">Centraline Hub</td><td>ESP32 + IP67 Dev Box + LM2596</td><td class="text-center">${c.numHubs} set</td><td class="text-right">€ 150</td><td class="text-right highlight-val">€ ${hubCost.toLocaleString('it-IT')}</td></tr>
+                    <tr><td class="font-bold">Moduli 4G</td><td>SIM7600 LTE Antenna Module</td><td class="text-center">${c.numHubs} set</td><td class="text-right">€ 40</td><td class="text-right highlight-val">€ ${simCost.toLocaleString('it-IT')}</td></tr>
+                    <tr><td class="font-bold">LED Bordo Strada</td><td>Marker LED WS2812B impermeabili</td><td class="text-center">${c.numLeds} unità</td><td class="text-right">€ 22</td><td class="text-right highlight-val">€ ${ledCost.toLocaleString('it-IT')}</td></tr>
+                    <tr><td class="font-bold">Sistemi Antigelo</td><td>Pompa + serbatoio + ugello + relè</td><td class="text-center">${c.numDeice} staz.</td><td class="text-right">€ 120</td><td class="text-right highlight-val">€ ${deiceCost.toLocaleString('it-IT')}</td></tr>
+                    <tr><td class="font-bold">Lampioni Solari</td><td>Pannello + accumulatore + faro LED + palo 5m</td><td class="text-center">${c.numLamps} unità</td><td class="text-right">€ ${c.lampUnitCost}</td><td class="text-right highlight-val">€ ${solarLampCost.toLocaleString('it-IT')}</td></tr>
+                    <tr><td class="font-bold">Cablaggio & Linee</td><td>Cavi di potenza e conduit interrato</td><td class="text-center">${Math.round(c.stretchKm*1000)} m</td><td class="text-right">—</td><td class="text-right highlight-val">€ ${cablingCost.toLocaleString('it-IT')}</td></tr>
+                    <tr class="bg-slate-200"><td class="font-bold" colspan="4">HARDWARE TOTALE</td><td class="text-right font-bold text-navy">€ ${subtotalHardware.toLocaleString('it-IT')}</td></tr>
+                    <tr><td class="font-bold">Scavo e Posa Cavi</td><td>Incanalamento, conduit e scavi a bordo strada</td><td class="text-center">${Math.round(c.stretchKm*1000)} m</td><td class="text-right">€ ${c.excavationCostPerMeter} / m</td><td class="text-right highlight-val">€ ${excavationCostTotal.toLocaleString('it-IT')}</td></tr>
+                    <tr><td class="font-bold">Manodopera & Collaudo</td><td>Installazione fisica e tuning firmware</td><td class="text-center">—</td><td class="text-right">—</td><td class="text-right highlight-val">€ ${installationCost.toLocaleString('it-IT')}</td></tr>
+                    <tr><td class="font-bold">Infrastruttura Web</td><td>AWS Cloud e Dashboard di controllo (3 anni)</td><td class="text-center">—</td><td class="text-right">—</td><td class="text-right highlight-val">€ 20.000</td></tr>
+                    <tr><td class="font-bold">Imprevisti e Riserve</td><td>Margine cautelativo stimato (10%)</td><td class="text-center">—</td><td class="text-right">—</td><td class="text-right highlight-val">€ ${contingency.toLocaleString('it-IT')}</td></tr>
+                    <tr class="row-total"><td>TOTALE STIMATO</td><td colspan="3">Infrastruttura tecnologica e manodopera chiavi in mano</td><td class="text-right">€ ${totalProjectCost.toLocaleString('it-IT')}</td></tr>
+                `;
+            }
+
+            // Sync visual representation on slide 8 dynamically
+            const roiBudgetTotalEl = document.getElementById('roi-budget-total');
+            if (roiBudgetTotalEl) {
+                roiBudgetTotalEl.innerText = `€ ${totalProjectCost.toLocaleString('it-IT')}`;
+            }
+
+            // Payback Period dynamically adjusted
+            const annualSavings = (18000 + 30000 + 8000 + 5000) * (c.stretchKm / 7.5);
+            const paybackYears = totalProjectCost / annualSavings;
+            const paybackEl = document.getElementById('roi-payback-text');
+            if (paybackEl) {
+                paybackEl.innerHTML = `Ammortamento totale stimato in <strong>${paybackYears.toFixed(1)} anni</strong>`;
+            }
+        }
+
+        // CORE GEMINI API CALL HANDLER
+        async function callGemini(userPrompt, systemInstruction = null) {
+            const apiKey = document.getElementById('api-key-input')?.value || "";
+            // Use fallback preview live endpoint
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userPrompt }] }]
+            };
+            if (systemInstruction) {
+                payload.systemInstruction = { parts: [{ text: systemInstruction }] };
+            }
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 400) {
+                        return "Errore della richiesta (400). Verifica i parametri o la chiave API.";
+                    }
+                    if (response.status === 403) {
+                        return "Errore di autorizzazione (403). La chiave API inserita non è corretta o non è valida.";
+                    }
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                return result.candidates?.[0]?.content?.parts?.[0]?.text || "Errore: il modello non ha restituito una risposta valida.";
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                return `Impossibile comunicare con Gemini. Assicurati che il tuo browser sia online. Errore riscontrato: ${error.message}`;
+            }
+        }
+
+        // FEATURE 1: SPEECH WRITER & PRESENTER COACH
+        async function generateSpeech() {
+            const container = document.getElementById('coach-speech-container');
+            container.innerHTML = `<span class="flex items-center gap-1.5"><i class="fa-solid fa-spinner animate-spin"></i> Analisi slide e generazione discorso in corso con Gemini...</span>`;
+            
+            const audience = document.getElementById('coach-audience-select').value;
+            const activeSlideHtml = document.getElementById(`slide-${currentSlide}`).innerHTML;
+
+            // Context Prompting
+            const systemPrompt = `Sei un consulente esperto di comunicazione istituzionale e ingegneria infrastrutturale per il progetto "Strade Sicure" (un sistema IoT intelligente per la sicurezza stradale, sbrinamento e monitoraggio su 7.5 km). Il tuo compito è redigere un breve script di presentazione di massimo 3 paragrafi per una slide di presentazione basata sull'HTML fornito. Sii convincente, professionale ed efficace.`;
+            
+            let audienceContext = "";
+            if (audience === "pubblica_amministrazione") {
+                audienceContext = "Amministratori Pubblici e Sindaci. Concentrati sui vantaggi sociali, la sicurezza dei cittadini, l'abbattimento degli incidenti, la sostenibilità ecologica a impatto zero e la modernizzazione smart del comune.";
+            } else if (audience === "investitori") {
+                audienceContext = "Investitori Privati e Venture Capitalist. Enfatizza il Return on Investment (ROI), i costi strutturati, il tempo di recupero del capitale (Payback), la scalabilità e l'efficientamento operativo.";
+            } else {
+                audienceContext = "Ingegneri, programmatori ed esperti tecnici di reti IoT. Approfondisci l'architettura dei microcontrollori ESP32, il cablaggio dei LED WS2812B, le sonde di temperatura DS18B20, i filtri LM358 e la trasmissione 4G SIM7600.";
+            }
+
+            const prompt = `Analizza l'HTML della seguente slide (Slide Numero ${currentSlide}) ed elabora un copione di presentazione in lingua italiana ottimizzato per un pubblico di tipo: ${audienceContext}.
+            Ecco l'HTML della slide:
+            ${activeSlideHtml}`;
+
+            const response = await callGemini(prompt, systemPrompt);
+            container.innerHTML = formatAIResponse(response);
+        }
+
+        // FEATURE 2: WEATHER & METEO SIMULATOR (GEMINI SIMULATION LAB)
+        async function runOperationalSimulation() {
+            const container = document.getElementById('sim-report-output');
+            container.innerHTML = `<span class="flex items-center gap-1.5"><i class="fa-solid fa-spinner animate-spin"></i> Elaborazione fisica del circuito e calcolo dello scenario con Gemini...</span>`;
+
+            const temp = document.getElementById('slider-temp').value;
+            const hum = document.getElementById('slider-hum').value;
+            const light = document.getElementById('select-light').value;
+            const traffic = document.getElementById('select-traffic').value;
+
+            const systemPrompt = `Sei l'algoritmo integrato di simulazione virtuale del sistema IoT "Strade Sicure". Conosci tutti i parametri fisici ed elettronici dell'infrastruttura (15 Centraline ESP32, 120 sensori di temperatura e umidità, 150 lampioni solari, 37 moduli antighiaccio con pompa a diaframma, 750 LED WS2812B, bus di comunicazione 4G SIM7600). Calcola la reazione simulata del sistema a partire dai dati ambientali ed elabora un report tecnico e operativo dettagliato.`;
+
+            const prompt = `Simula la risposta logica, fisica ed elettronica delle nostre centraline stradali sulla base dei seguenti parametri registrati dai sensori:
+            - Temperatura asfalto registrata dalla sonda DS18B20: ${temp} °C
+            - Umidità dell'aria registrata dal DHT22: ${hum} %
+            - Luce ambientale (BH1750): ${light}
+            - Sensori piezoelettrici di transito veicoli: ${traffic}
+
+            Nel report di simulazione in lingua italiana, descrivi chiaramente:
+            1. **Stato Rischio Gelo**: Determina se la temperatura e l'umidità creano condizioni di brinamento dell'asfalto (calcolo approssimativo del dew point).
+            2. **Attivazione Antighiaccio**: Specifica se le 37 pompe a relè da 12V si attivano o restano in standby (La logica teorica dice: T < 2°C e Hum > 80%).
+            3. **Stato Illuminazione LED WS2812B**: Indica di che colore si accendono le strisce LED lungo la carreggiata e se si muovono ad inseguimento dinamico (Bianco per guida, ambra attenzione, rosso pericolo).
+            4. **Lampioni Solari & Batteria**: Valuta se i lampioni solari stanno caricando la batteria Li-ion (con il chip TP4056) o se stanno scaricando l'accumulo notturno per illuminare il tracciato.`;
+
+            const response = await callGemini(prompt, systemPrompt);
+            container.innerHTML = formatAIResponse(response);
+        }
+
+        // FEATURE 3: FINANCIAL OPTIMIZER SANDBOX
+        async function runFinancialOptimization() {
+            const container = document.getElementById('fin-report-output');
+            container.innerHTML = `<span class="flex items-center gap-1.5"><i class="fa-solid fa-spinner animate-spin"></i> Esecuzione calcolo ROI e congruità finanziaria con Gemini...</span>`;
+
+            const c = activeConfig;
+            
+            // Re-calculate live budget values to feed into the prompt
+            const hubCost = c.numHubs * 150;
+            const simCost = c.numHubs * 40;
+            const sensorCost = c.numHubs * 23;
+            const piezoCost = Math.round(c.numHubs * 2) * 20;
+            const ledCost = c.numLeds * 22;
+            const deiceCost = c.numDeice * 120;
+            const liquidCost = Math.round(c.stretchKm * 66.6) * 2;
+            const solarLampCost = c.numLamps * c.lampUnitCost;
+            const cablingCost = Math.round(c.stretchKm * 1000) * 2.4; 
+            const subtotalHardware = hubCost + simCost + sensorCost + piezoCost + ledCost + deiceCost + liquidCost + solarLampCost + cablingCost;
+            const excavationCostTotal = Math.round(c.stretchKm * 1000) * c.excavationCostPerMeter;
+            const installationCost = Math.round(35000 * (c.stretchKm / 7.5));
+            const cloudSoftware = 20000;
+            const totalProjectCost = subtotalHardware + excavationCostTotal + installationCost + cloudSoftware + Math.round((subtotalHardware + excavationCostTotal + installationCost + cloudSoftware) * 0.1);
+
+            const annualSavings = (18000 + 30000 + 8000 + 5000) * (c.stretchKm / 7.5);
+            const paybackYears = totalProjectCost / annualSavings;
+
+            const systemPrompt = `Sei l'analista finanziario capo del dipartimento di Sviluppo Infrastrutturale Smart. Analizza i dati del budget del progetto di sicurezza stradale "Strade Sicure" e valuta la sua sostenibilità economica, la congruità del ROI e consiglia soluzioni per massimizzare l'efficientamento delle risorse.`;
+
+            const prompt = `Il comitato di sviluppo ha variato i parametri strutturali del progetto. Esegui un audit finanziario dettagliato basato sui seguenti dati ricalcolati:
+            - Lunghezza tratta stradale programmata: ${c.stretchKm.toFixed(1)} km
+            - Numero di lampioni solari necessari: ${c.numLamps} unità (costo unitario impostato: € ${c.lampUnitCost})
+            - Centraline IoT Hub (ESP32): ${c.numHubs} unità
+            - Dispositivi di sbrinamento antighiaccio dislocati: ${c.numDeice} stazioni
+            - Numero totale di LED bordo strada: ${c.numLeds} marker
+            - Costo scavi interrati a bordo strada: € ${c.excavationCostPerMeter} al metro (Totale scavo: € ${excavationCostTotal.toLocaleString('it-IT')})
+            - **Costo Totale Stimato dell'Infrastruttura**: € ${totalProjectCost.toLocaleString('it-IT')}
+            - Risparmio sociale ed economico annuo atteso: € ${annualSavings.toLocaleString('it-IT')} / anno
+            - **Punto di Pareggio (Ammortamento)**: ${paybackYears.toFixed(1)} anni
+
+            Fornisci una breve relazione di fattibilità in lingua italiana articolata su:
+            1. **Valutazione Congruità del Budget**: Il costo complessivo di € ${totalProjectCost.toLocaleString('it-IT')} è congruo per coprire ${c.stretchKm.toFixed(1)} km di strada?
+            2. **Analisi del Tempo di Ammortamento**: Un payback di ${paybackYears.toFixed(1)} anni è accettabile per una PA o per investitori privati?
+            3. **Consigli per Riduzione dei Costi**: Suggerisci 2 strategie tecnologiche per ridurre ulteriormente il costo di installazione (es. utilizzo di wireless al posto del cablaggio, ottimizzazione della densità dei sensori).`;
+
+            const response = await callGemini(prompt, systemPrompt);
+            container.innerHTML = formatAIResponse(response);
+        }
+
+        // FEATURE 4: AI TECHNICAL SPECIALIST CHATBOT
+        async function sendChatMessage() {
+            const inputEl = document.getElementById('chat-user-input');
+            const messageText = inputEl.value.trim();
+            if (!messageText) return;
+
+            // Clear input
+            inputEl.value = '';
+
+            const container = document.getElementById('chat-messages-container');
+            
+            // Append user message
+            container.innerHTML += `
+                <div class="bg-slate-800 text-slate-100 p-2.5 rounded-lg border border-slate-700 max-w-[85%] self-end">
+                    <strong>Tu:</strong> ${messageText}
+                </div>
+            `;
+            container.scrollTop = container.scrollHeight;
+
+            // Append loader for assistant
+            const loaderId = `loader-${Date.now()}`;
+            container.innerHTML += `
+                <div id="${loaderId}" class="bg-slate-900 text-slate-300 p-2.5 rounded-lg border border-slate-800 max-w-[85%] self-start flex items-center gap-1.5">
+                    <strong>AI Assistant:</strong> <i class="fa-solid fa-spinner animate-spin"></i> Elaborazione risposta in corso...
+                </div>
+            `;
+            container.scrollTop = container.scrollHeight;
+
+            const systemPrompt = `Sei l'assistente tecnico capo del progetto "Strade Sicure" (un'infrastruttura IoT intelligente applicata su una tratta di 7.5 km). Sei estremamente competente in firmware C++ per ESP32, calcoli termodinamici per lo scioglimento del ghiaccio stradale, connettività 4G/LTE cellulare tramite comandi AT per SIM7600, amplificazione di segnale con operazionali LM358, cablaggio dei LED WS2812B a bus unico e ottimizzazione del budget della pubblica amministrazione. Fornisci risposte chiare, dettagliate e orientate alla soluzione pratica.`;
+
+            const response = await callGemini(messageText, systemPrompt);
+            
+            // Remove loader and append actual response
+            const loaderEl = document.getElementById(loaderId);
+            if (loaderEl) loaderEl.remove();
+
+            container.innerHTML += `
+                <div class="bg-slate-900 text-slate-300 p-2.5 rounded-lg border border-slate-800 max-w-[85%] self-start">
+                    <strong>AI Assistant:</strong> ${formatAIResponse(response)}
+                </div>
+            `;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Handle quick-select actions in chat
+        function quickPrompt(promptText) {
+            document.getElementById('chat-user-input').value = promptText;
+            sendChatMessage();
+        }
+
+        // Helper function to format response with markdown-like styling (strong text, list bullet alignment)
+        function formatAIResponse(text) {
+            if (!text) return "";
+            
+            // Replace line breaks
+            let formatted = text.replace(/\n/g, '<br>');
+            // Bold mapping
+            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            // Bullet points mapping
+            formatted = formatted.replace(/^\*\s(.*)/gm, '• $1');
+            
+            return formatted;
+        }
+    </script>
+</body>
+</html>
